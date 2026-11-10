@@ -1,3 +1,70 @@
+## About this project
+
+### How to run it
+1. git clone https://github.com/maxrbeck/inf255-assignment5.git
+2. cd inf255-assignment5
+3. npm install
+4. npm run dev
+
+### Component map
+**App.vue**: (what it's responsible for)
+- Props: none
+- Listens for: toggle (from AnimalCard), filter and sort (from AnimalControls)
+
+**AnimalCard.vue**: (what it's responsible for)
+- Props: animal, from App's v-for over visibleAnimals
+- Emits: toggle, handled in App by toggleAdoption(animal)
+
+**AnimalControls.vue**: (what it's responsible for)
+- Props: activeFilter, from App
+- Emits: filter (handled by setFilter), sort (handled by setSort)
+
+### Trace a click
+*The Trace a click and Compare with Assignment 4 sections were drafted with
+AI (Claude), with my professor's permission.*
+
+What happens when the user clicks **Adopt** on Luna:
+
+1. **AnimalCard (Luna's card):** the button's `@click` runs `emit('toggle')`.
+   The card doesn't change anything itself. It just announces that its button
+   was clicked.
+2. **App's template:** App is listening on that card with
+   `@toggle="toggleAdoption(animal)"`. Luna's card was created by the `v-for`
+   loop, so `animal` in that listener is Luna's object.
+3. **App, `toggleAdoption(animal)`:** flips Luna's `adopted` value from `false`
+   to `true`. Luna's object is inside the `animals` ref, so Vue notices the
+   change.
+4. **App, computed properties:** `visibleAnimals` and `availableCount` both
+   read from `animals`, so Vue recalculates both. `availableCount` goes from
+   4 to 3.
+5. **Back down to AnimalCard:** Luna's card gets the updated `animal` prop. The
+   `:class` binding adds the `adopted` class, so the card turns gray. The
+   status text changes to "Adopted" and the button changes to "Return".
+6. **On the page:** the count line now reads "3 of 8 animals are available
+   for adoption." No redraw function was called anywhere.
+
+The click travels **up** as an event (card to App), the data changes only in
+App, and the new data travels back **down** as props (App to card). If the
+filter is set to Available, Luna disappears from the list instead, because
+`visibleAnimals` now filters her out.
+
+### Compare with Assignment 4
+In Assignment 4, every change had to end with a call to `updateDisplay()`,
+which cleared the list and rebuilt every card by hand. If I forgot that call
+anywhere, the page went out of date. In Vue, that work was split up. The
+filter and sort logic moved into the `visibleAnimals` computed property, the
+count moved into `availableCount`, and the card-building code became
+AnimalCard's template. Vue now keeps track of which data each part of the page
+depends on and updates it automatically whenever that data changes, so I never
+call a redraw function. What I still decide myself is the rules: how filtering
+and sorting work, which component owns the data, what gets passed down as
+props, and which events the components send up. Vue handles *when* the page
+updates. I still decide *what* it shows and *who is allowed to change the
+data*.
+
+
+
+
 # Assignment 5 — Vue Components and Events
 
 You will rebuild the animal adoption board from Assignment 4 in Vue. It will look
