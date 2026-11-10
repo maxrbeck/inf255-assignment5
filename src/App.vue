@@ -9,6 +9,7 @@
  */
 
 import { ref, computed } from "vue";
+import AnimalCard from "./components/AnimalCard.vue";
 
 // ------------------------------------
 // App Data
@@ -85,8 +86,8 @@ loadAnimals();
 				<p v-if="loading">Loading animals...</p>
 				<p v-else-if="error" class="error-message">{{ error }}</p>
 				<div v-else>
-					<!-- Temporary name list until AnimalCard exists (TODO 2). -->
-					<p v-for="animal in animals" :key="animal.id">{{ animal.name }}</p>
+					<!-- One card per animal; :animal passes this loop's animal down as a prop. -->
+					<AnimalCard v-for="animal in animals" :key="animal.id" :animal="animal" />
 				</div>
 			</div>
 		</section>
