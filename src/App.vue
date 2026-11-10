@@ -10,6 +10,7 @@
 
 import { ref, computed } from "vue";
 import AnimalCard from "./components/AnimalCard.vue";
+import AnimalControls from "./components/AnimalControls.vue";
 
 // ------------------------------------
 // App Data
@@ -67,8 +68,50 @@ function toggleAdoption(animal) {
 // Filter, Sort, and Count
 // ------------------------------------
 
-// TODO 4: Create activeFilter and activeSort, the visibleAnimals and
-// availableCount computed properties, and setFilter() and setSort().
+// What the user currently wants to see. AnimalControls asks App to change these.
+const activeFilter = ref("all");
+const activeSort = ref("default");
+
+// This computed property replaces updateDisplay() from Assignment 4. Instead
+// of drawing the cards, it just returns the list that should be shown. Vue
+// keeps track of which refs it read (animals, activeFilter, activeSort), and
+// any time one of them changes, like adopting an animal or clicking a filter,
+// Vue recalculates it and redraws the cards on its own. That's why nothing
+// has to be called after a change anymore.
+const visibleAnimals = computed(() => {
+	// Copy first so sort() doesn't reorder the real array; "Original order"
+	// needs it untouched.
+	let visible = animals.value.slice();
+
+	if (activeFilter.value === "available") {
+		visible = visible.filter((a) => !a.adopted);
+	} else if (activeFilter.value === "adopted") {
+		visible = visible.filter((a) => a.adopted);
+	}
+
+	if (activeSort.value === "name") {
+		visible.sort((a, b) => a.name.localeCompare(b.name));
+	} else if (activeSort.value === "age") {
+		// Negative result puts a first, so youngest animals come first.
+		visible.sort((a, b) => a.age - b.age);
+	}
+
+	return visible;
+});
+
+// Counts from all animals, not visibleAnimals, so filtering doesn't change it.
+const availableCount = computed(
+	() => animals.value.filter((a) => !a.adopted).length,
+);
+
+// Called with the value AnimalControls emits ("all", "name", etc.).
+function setFilter(filter) {
+	activeFilter.value = filter;
+}
+
+function setSort(sort) {
+	activeSort.value = sort;
+}
 </script>
 
 <template>
@@ -81,19 +124,31 @@ function toggleAdoption(animal) {
 		<section aria-labelledby="animals-heading">
 			<h2 id="animals-heading">Animals</h2>
 
-			<!-- TODO 4: The available count goes here. -->
+			<!-- Hidden while loading or after an error, since there's nothing to count. -->
+			<p v-if="!loading && !error" id="animal-count">
+				{{ availableCount }} of {{ animals.length }} animals are available for adoption.
+			</p>
 
-			<!-- TODO 4: The AnimalControls component goes here. -->
+			<!-- activeFilter goes down so it can highlight the right button; the
+			     chosen filter or sort comes back up as an event. -->
+			<AnimalControls
+				:active-filter="activeFilter"
+				@filter="setFilter"
+				@sort="setSort"
+			/>
 
 			<div id="animal-list" aria-live="polite">
 				<!-- Only one of these shows at a time, depending on the request's state. -->
 				<p v-if="loading">Loading animals...</p>
 				<p v-else-if="error" class="error-message">{{ error }}</p>
+				<p v-else-if="visibleAnimals.length === 0" class="empty-message">
+					There are no animals to show.
+				</p>
 				<div v-else>
 					<!-- One card per animal; :animal passes this loop's animal down as a prop. -->
 					<!-- @toggle uses this loop's animal, so each card's click changes its own animal. -->
 					<AnimalCard
-						v-for="animal in animals"
+						v-for="animal in visibleAnimals"
 						:key="animal.id"
 						:animal="animal"
 						@toggle="toggleAdoption(animal)"
