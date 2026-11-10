@@ -57,7 +57,11 @@ loadAnimals();
 // Adopt or Return an Animal
 // ------------------------------------
 
-// TODO 3: Write toggleAdoption(animal).
+// Runs when a card emits "toggle". No redraw call needed: animal lives inside
+// the animals ref, so Vue notices the change and updates that card.
+function toggleAdoption(animal) {
+	animal.adopted = !animal.adopted;
+}
 
 // ------------------------------------
 // Filter, Sort, and Count
@@ -87,7 +91,13 @@ loadAnimals();
 				<p v-else-if="error" class="error-message">{{ error }}</p>
 				<div v-else>
 					<!-- One card per animal; :animal passes this loop's animal down as a prop. -->
-					<AnimalCard v-for="animal in animals" :key="animal.id" :animal="animal" />
+					<!-- @toggle uses this loop's animal, so each card's click changes its own animal. -->
+					<AnimalCard
+						v-for="animal in animals"
+						:key="animal.id"
+						:animal="animal"
+						@toggle="toggleAdoption(animal)"
+					/>
 				</div>
 			</div>
 		</section>
